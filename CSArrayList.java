@@ -1,7 +1,5 @@
 
-import java.util.Arrays;
-import java.util.AbstractList;
-import java.util.Collection;
+import java.util.*;
 
 /**
  *  This class implements some of the methods of the Java
@@ -68,6 +66,7 @@ public class CSArrayList<E>
         }
         theData[size] = anEntry;
         size++;
+        modCount++;
         return true;
     }
 
@@ -90,6 +89,7 @@ public class CSArrayList<E>
         // Insert the new item.
         theData[index] = anEntry;
         size++;
+        modCount++;
     }
     /**
      * Get a value in the array based on its index.
@@ -144,6 +144,7 @@ public class CSArrayList<E>
             theData[i - 1] = theData[i];
         }
         size--;
+        modCount++;
         return returnValue;
     }
 
@@ -174,15 +175,87 @@ public class CSArrayList<E>
     @Override
     public int indexOf(Object item) {
         for (int i = 0; i < size; i++) {
-            if (theData[i] == null && item == null) {
-                return i;
-            }
-            if (theData[i].equals(item)) {
-                return i;
+            if (item == null){
+                if (theData[i] == null){
+                    return i;
+                }
+            } else {
+                if (item.equals(theData[i])){
+                    return i;
+                }
             }
         }
         return -1;
     }
+    // Part A: Implementing Extensions
+    @Override
+    public String toString(){
+        if (size == 0) return "[]";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < size; i++){
+            sb.append(theData[i]);
+            if (i < size - 1) sb.append(", ");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+    public void clear(){
+        theData = (E[]) new Object[INITIAL_CAPACITY];
+        size = 0;
+        modCount++;
+    }
+    public boolean isEmpty(){
+        return size == 0;
+    }
+    @Override
+    public boolean remove(Object o){
+        int index = indexOf(o);
+        if (index >= 0){
+            remove(index);
+            return true;
+        }
+        return false;
+    }
+    public void ensureCapacity(int minCapacity){
+        if (minCapacity <= theData.length) return;
+        theData = Arrays.copyOf(theData, minCapacity);
+    }
+    public void trimToSize(){
+        if (size < theData.length){
+            E[] newArray = (E[]) new Object[size];
+            for (int i = 0; i <size; i++){
+                newArray[i] = theData[i];
+            }
+            theData = newArray;
+        }
+    }
+    // Part B: Fail-Fast Iterators
+@Override
+    public java.util.Iterator<E> iterator(){
+        return new CSArrayListIterator();
+    }
+    private class CSArrayListIterator implements java.util.Iterator<E> {
+        private int cursor = 0;
+        private final int expectedModCount = modCount;
+
+        private void checkForComodification(){
+            if (modCount != expectedModCount){
+                throw new ConcurrentModificationException();
+            }
+        }
+        @Override
+        public boolean hasNext() {
+            checkForComodification();
+            return cursor < size;
+        }
+        @Override
+        public E next() {
+            checkForComodification();
+            if (cursor >= size) throw new java.util.NoSuchElementException();
+            return theData[cursor++];
+        }
+    }
+
 }
 
 
